@@ -11,11 +11,13 @@ import { HomeIcon, CompassIcon, PlusIcon, ChatIcon, UserIcon } from './icons';
 import UploadModal from './UploadModal';
 import './BottomNav.css';
 
-function BottomNav() {
-  // Lacak tab mana yang sedang aktif
-  const [activeTab, setActiveTab] = useState('home');
-  // Kontrol visibilitas modal upload
+// activeTab & onTabChange dikelola oleh App.jsx
+// sehingga komponen lain (misal ProfilePage) bisa tahu tab mana yang aktif
+function BottomNav({ activeTab = 'home', onTabChange }) {
+  // Kontrol visibilitas modal upload — lokal cukup di sini
   const [showUpload, setShowUpload] = useState(false);
+
+  const goTo = (tab) => onTabChange?.(tab);
 
   return (
     <>
@@ -23,8 +25,9 @@ function BottomNav() {
         {/* Beranda */}
         <button
           className={`nav-item ${activeTab === 'home' ? 'active' : ''}`}
-          onClick={() => setActiveTab('home')}
+          onClick={() => goTo('home')}
           aria-label="Beranda"
+          aria-current={activeTab === 'home' ? 'page' : undefined}
         >
           <HomeIcon filled={activeTab === 'home'} size={26} />
           <span className="nav-label">Beranda</span>
@@ -33,8 +36,9 @@ function BottomNav() {
         {/* Jelajahi */}
         <button
           className={`nav-item ${activeTab === 'explore' ? 'active' : ''}`}
-          onClick={() => setActiveTab('explore')}
+          onClick={() => goTo('explore')}
           aria-label="Jelajahi"
+          aria-current={activeTab === 'explore' ? 'page' : undefined}
         >
           <CompassIcon filled={activeTab === 'explore'} size={26} />
           <span className="nav-label">Jelajahi</span>
@@ -53,8 +57,9 @@ function BottomNav() {
         {/* Kotak Masuk */}
         <button
           className={`nav-item ${activeTab === 'inbox' ? 'active' : ''}`}
-          onClick={() => setActiveTab('inbox')}
+          onClick={() => goTo('inbox')}
           aria-label="Kotak Masuk"
+          aria-current={activeTab === 'inbox' ? 'page' : undefined}
         >
           <ChatIcon filled={activeTab === 'inbox'} size={26} />
           <span className="nav-label">Kotak Masuk</span>
@@ -63,8 +68,9 @@ function BottomNav() {
         {/* Profil */}
         <button
           className={`nav-item ${activeTab === 'profile' ? 'active' : ''}`}
-          onClick={() => setActiveTab('profile')}
+          onClick={() => goTo('profile')}
           aria-label="Profil"
+          aria-current={activeTab === 'profile' ? 'page' : undefined}
         >
           <UserIcon filled={activeTab === 'profile'} size={26} />
           <span className="nav-label">Profil</span>

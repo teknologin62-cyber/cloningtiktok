@@ -10,11 +10,11 @@
 // useAuth() mengelola semua state dan logika autentikasi.
 // ============================================================
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import VideoFeed from './components/VideoFeed'
 import BottomNav from './components/BottomNav'
 import AuthPage from './pages/AuthPage'
-import { LogOutIcon } from './components/icons'
+import ProfilePage from './pages/ProfilePage'
 import { useAuth } from './hooks/useAuth'
 import { checkConnection } from './lib/supabaseClient'
 import './App.css'
@@ -23,6 +23,8 @@ import './pages/AuthPage.css'
 
 function App() {
   const { user, loading, signUp, signIn, signOut } = useAuth()
+  // Tab aktif dikelola di App agar ProfilePage bisa di-render/sembunyi
+  const [activeTab, setActiveTab] = useState('home')
 
   // Log status koneksi Supabase ke Console sekali saat mount
   useEffect(() => {
@@ -30,7 +32,6 @@ function App() {
   }, [])
 
   // ── Layar loading awal: cegah "kedipan" halaman login ──
-  // Ditampilkan hanya saat pertama kali aplikasi memeriksa sesi
   if (loading) {
     return (
       <div className="auth-loading-screen">
@@ -45,21 +46,27 @@ function App() {
     return <AuthPage onSignUp={signUp} onSignIn={signIn} />
   }
 
-  // ── Sudah login: tampilkan feed video ──
+  // ── Sudah login: tampilkan feed + navigasi ──
   return (
     <div className="app">
-      {/* Tombol logout — pojok kanan atas, di luar feed */}
-      <button
-        className="app-logout-btn"
-        onClick={signOut}
-        aria-label="Keluar dari akun"
-        title={`Keluar (${user.email})`}
+      {/* Feed video — sembunyikan saat di tab profil agar state video terjaga */}
+      <div
+        className="app-feed-layer"
+        style={{ display: activeTab === 'profile' ? 'none' : 'block' }}
+        aria-hidden={activeTab === 'profile'}
       >
-        <LogOutIcon size={18} />
-      </button>
+        <VideoFeed />
+      </div>
 
-      <VideoFeed />
-      <BottomNav />
+      {/* Halaman profil */}
+      {activeTab === 'profile' && (
+        <div className="app-profile-layer">
+          <ProfilePage user={user} onSignOut={signOut} />
+        </div>
+      )}
+
+      {/* Navigasi bawah — kirim activeTab & setter ke BottomNav */}
+      <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
     </div>
   )
 }

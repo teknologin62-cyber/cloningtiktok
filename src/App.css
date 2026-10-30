@@ -52,3 +52,11 @@
 .app-logout-btn:active {
   transform: scale(0.9);
 }
+
+/* Layer feed & profil — keduanya mengisi ruang yang sama */
+.app-feed-layer,
+.app-profile-layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
