@@ -1,0 +1,321 @@
+/* ============================================================
+   GAYA UPLOAD MODAL
+   ============================================================ */
+
+/* Backdrop gelap */
+.upload-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 100;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  animation: backdropFadeIn 0.2s ease;
+}
+
+@keyframes backdropFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Panel modal — slide up dari bawah */
+.upload-modal {
+  width: 100%;
+  max-width: var(--max-app-width, 480px);
+  background: #1a1a2e;
+  border-radius: 20px 20px 0 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  max-height: 92dvh;
+  overflow: hidden;
+  animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+/* Header */
+.upload-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  flex-shrink: 0;
+}
+
+.upload-modal-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-primary, #fff);
+  margin: 0;
+}
+
+.upload-modal-close {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-muted, rgba(255,255,255,0.6));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, color 0.2s;
+}
+
+.upload-modal-close:hover {
+  background: rgba(255, 59, 92, 0.3);
+  color: #fff;
+}
+
+.upload-modal-close:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Body — scrollable */
+.upload-modal-body {
+  padding: 20px;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ── Dropzone ── */
+.upload-dropzone {
+  border: 2px dashed rgba(255, 255, 255, 0.18);
+  border-radius: 14px;
+  padding: 36px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  position: relative;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.upload-dropzone:hover,
+.upload-dropzone:focus-visible {
+  border-color: var(--accent-primary, #6c5ce7);
+  background: rgba(108, 92, 231, 0.07);
+  outline: none;
+}
+
+.upload-dropzone.dragging {
+  border-color: var(--accent-primary, #6c5ce7);
+  background: rgba(108, 92, 231, 0.12);
+}
+
+.upload-dropzone-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-primary, #6c5ce7), var(--accent-secondary, #a29bfe));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  margin-bottom: 4px;
+  box-shadow: 0 4px 16px rgba(108, 92, 231, 0.4);
+}
+
+.upload-dropzone-text {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary, #fff);
+  margin: 0;
+}
+
+.upload-dropzone-hint {
+  font-size: 13px;
+  color: var(--text-muted, rgba(255,255,255,0.5));
+  margin: 0;
+}
+
+.upload-dropzone-limit {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.3);
+  margin: 4px 0 0;
+}
+
+.upload-file-input {
+  display: none;
+}
+
+/* ── Preview video ── */
+.upload-preview-wrap {
+  position: relative;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #000;
+}
+
+.upload-preview-video {
+  width: 100%;
+  max-height: 280px;
+  object-fit: contain;
+  display: block;
+  border-radius: 14px;
+}
+
+.upload-preview-remove {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.upload-preview-remove:hover {
+  background: rgba(255, 59, 92, 0.7);
+}
+
+.upload-preview-remove:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.upload-preview-filename {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.4);
+  padding: 6px 10px;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  background: rgba(0,0,0,0.4);
+}
+
+/* ── Caption ── */
+.upload-caption-wrap {
+  position: relative;
+}
+
+.upload-caption-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 12px 14px 28px;
+  color: var(--text-primary, #fff);
+  font-size: 14px;
+  resize: none;
+  line-height: 1.5;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+  font-family: inherit;
+}
+
+.upload-caption-input::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.upload-caption-input:focus {
+  outline: none;
+  border-color: var(--accent-primary, #6c5ce7);
+}
+
+.upload-caption-input:disabled {
+  opacity: 0.5;
+}
+
+.upload-caption-count {
+  position: absolute;
+  bottom: 10px;
+  right: 12px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.3);
+  pointer-events: none;
+}
+
+/* ── Footer ── */
+.upload-modal-footer {
+  padding: 14px 20px calc(14px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  flex-shrink: 0;
+}
+
+.upload-post-btn {
+  width: 100%;
+  height: 50px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--accent-primary, #6c5ce7), var(--accent-secondary, #a29bfe));
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: opacity 0.2s, transform 0.15s;
+  box-shadow: 0 4px 16px rgba(108, 92, 231, 0.4);
+}
+
+.upload-post-btn:hover:not(.disabled) {
+  opacity: 0.92;
+  transform: translateY(-1px);
+}
+
+.upload-post-btn:active:not(.disabled) {
+  transform: scale(0.97);
+}
+
+.upload-post-btn.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Spinner */
+.upload-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2.5px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  display: inline-block;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Pesan sukses */
+.upload-success {
+  width: 100%;
+  height: 50px;
+  border-radius: 14px;
+  background: rgba(0, 200, 120, 0.18);
+  border: 1px solid rgba(0, 200, 120, 0.35);
+  color: #00c878;
+  font-size: 15px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  animation: fadeInScale 0.3s ease;
+}
+
+@keyframes fadeInScale {
+  from { transform: scale(0.95); opacity: 0; }
+  to   { transform: scale(1);    opacity: 1; }
+}
