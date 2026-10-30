@@ -1,0 +1,119 @@
+/* ============================================================
+   GAYA CREATOR INFO - Info kreator di kiri bawah video
+   ============================================================
+   Diposisikan di atas navigasi bawah dan tombol interaksi.
+   pointer-events: none agar ketukan tetap ke video.
+   ============================================================ */
+
+.creator-info {
+  position: absolute;
+  bottom: calc(var(--nav-height) + 20px);
+  left: 16px;
+  right: 84px;
+  z-index: 4;
+  pointer-events: none;
+}
+
+/* Baris atas: avatar + username */
+.creator-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+/* Avatar bulat dengan inisial nama */
+.creator-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+}
+
+/* Username + badge verifikasi */
+.creator-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.creator-username {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+}
+
+.verified-badge {
+  color: var(--accent-secondary);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+/* Caption / deskripsi */
+.creator-caption {
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--text-primary);
+  margin-bottom: 10px;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* Baris musik */
+.creator-music {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--text-primary);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+}
+
+.music-icon {
+  flex-shrink: 0;
+  opacity: 0.9;
+}
+
+/* Teks musik berjalan (marquee) */
+.music-scroll {
+  overflow: hidden;
+  white-space: nowrap;
+  max-width: 220px;
+  mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    #000 8%,
+    #000 92%,
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    #000 8%,
+    #000 92%,
+    transparent 100%
+  );
+}
+
+.music-name {
+  display: inline-flex;
+  animation: scroll-text 12s linear infinite;
+}
+
+.music-name span {
+  padding-right: 28px;
+  white-space: nowrap;
+}
+
+@keyframes scroll-text {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}

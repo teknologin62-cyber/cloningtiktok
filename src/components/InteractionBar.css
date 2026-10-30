@@ -1,0 +1,67 @@
+/* ============================================================
+   GAYA INTERACTION BAR - Tombol di sisi kanan video
+   ============================================================
+   Diposisikan vertikal di kanan, di atas navigasi bawah.
+   Setiap tombol: ikon bulat + jumlah di bawahnya.
+   ============================================================ */
+
+.interaction-bar {
+  position: absolute;
+  bottom: calc(var(--nav-height) + 20px);
+  right: 12px;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 22px;
+}
+
+/* Tombol individual */
+.interaction-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-primary);
+  transition: transform 0.15s ease;
+}
+
+.interaction-btn:active {
+  transform: scale(0.88);
+}
+
+/* Wadah ikon */
+.interaction-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.4));
+}
+
+/* Jumlah di bawah ikon */
+.interaction-count {
+  font-size: 13px;
+  font-weight: 600;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* Status aktif: Suka (merah) */
+.interaction-btn.liked .interaction-icon {
+  color: var(--like-active);
+  animation: pop 0.35s ease;
+}
+
+/* Status aktif: Bookmark (emas) */
+.interaction-btn.bookmarked .interaction-icon {
+  color: var(--bookmark-active);
+  animation: pop 0.35s ease;
+}
+
+/* Animasi "pop" saat status berubah */
+@keyframes pop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.35); }
+  100% { transform: scale(1); }
+}

@@ -1,0 +1,68 @@
+/* ============================================================
+   GAYA BOTTOM NAV - Navigasi bawah
+   ============================================================
+   Posisi: menempel di bawah aplikasi, semi-transparan dengan blur.
+   Tombol Tambah memiliki gaya khusus dengan gradien aksen.
+   ============================================================ */
+
+.bottom-nav {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: var(--nav-height);
+  background: var(--nav-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--nav-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 0 8px;
+  z-index: 10;
+}
+
+/* Item navigasi (Beranda, Jelajahi, Kotak Masuk, Profil) */
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 6px 8px;
+  color: var(--text-muted);
+  transition: color 0.2s ease;
+  flex: 1;
+}
+
+.nav-item.active {
+  color: var(--text-primary);
+}
+
+.nav-label {
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1;
+}
+
+/* Tombol Tambah (menonjol) */
+.nav-add {
+  width: 48px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  color: var(--text-primary);
+  background: linear-gradient(
+    135deg,
+    var(--accent-primary),
+    var(--accent-secondary)
+  );
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+  box-shadow: 0 2px 8px rgba(108, 92, 231, 0.3);
+}
+
+.nav-add:active {
+  transform: scale(0.92);
+}

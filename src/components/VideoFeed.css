@@ -1,0 +1,18 @@
+/* ============================================================
+   GAYA VIDEO FEED - Wadah scroll vertikal
+   ============================================================
+   scroll-snap-type: y mandatory  -> video menempel saat digulir
+   scrollbar-width: none          -> sembunyikan scrollbar
+   ============================================================ */
+
+.video-feed {
+  height: 100%;
+  overflow-y: scroll;
+  scroll-snap-type: y mandatory;
+  scrollbar-width: none;          /* Firefox */
+  -ms-overflow-style: none;       /* IE/Edge */
+}
+
+.video-feed::-webkit-scrollbar {
+  display: none;                  /* Chrome/Safari */
+}

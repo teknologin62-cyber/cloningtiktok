@@ -1,0 +1,95 @@
+/* ============================================================
+   TEMA GLOBAL "VIDORA" - Tema gelap modern
+   ============================================================
+   File ini berisi:
+   - Variabel warna (tema gelap)
+   - Reset CSS (menghilangkan gaya bawaan browser)
+   - Pengaturan tipografi dasar
+   ============================================================ */
+
+:root {
+  /* Warna latar */
+  --bg-primary: #0a0a0f;
+  --bg-secondary: #16161f;
+
+  /* Warna teks */
+  --text-primary: #ffffff;
+  --text-secondary: #a0a0b0;
+  --text-muted: #6b6b7b;
+
+  /* Warna aksen */
+  --accent-primary: #6c5ce7;    /* ungu */
+  --accent-secondary: #00cec9;  /* teal */
+
+  /* Warna status */
+  --like-active: #ff3b5c;       /* merah untuk suka aktif */
+  --bookmark-active: #ffc107;   /* emas untuk bookmark aktif */
+
+  /* Navigasi */
+  --nav-bg: rgba(10, 10, 15, 0.92);
+  --nav-border: rgba(255, 255, 255, 0.08);
+
+  /* Ukuran */
+  --nav-height: 60px;
+  --max-app-width: 430px;
+
+  /* Tipografi */
+  --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+
+  font-family: var(--font-family);
+  color: var(--text-primary);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Reset CSS - hilangkan gaya bawaan browser */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  background: #050508;
+  color: var(--text-primary);
+  overflow: hidden;
+}
+
+#root {
+  height: 100%;
+}
+
+/* Tombol dasar */
+button {
+  font-family: inherit;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: inherit;
+}
+
+button:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+/* Tautan */
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Sembunyikan scrollbar di seluruh aplikasi */
+::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+body {
+  scrollbar-width: none;
+}

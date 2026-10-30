@@ -1,0 +1,54 @@
+/* ============================================================
+   GAYA APP - Layout utama aplikasi "Vidora"
+   ============================================================
+   Mobile-first: aplikasi memenuhi seluruh layar HP.
+   Desktop: aplikasi ditampilkan seperti layar HP di tengah,
+   dengan latar gelap di sekitarnya.
+   ============================================================ */
+
+.app {
+  height: 100%;
+  height: 100dvh; /* tinggi viewport dinamis untuk HP */
+  position: relative;
+  background: var(--bg-primary);
+  overflow: hidden;
+}
+
+/* Desktop: bingkai HP di tengah layar */
+@media (min-width: 481px) {
+  .app {
+    max-width: var(--max-app-width);
+    margin: 0 auto;
+    box-shadow: 0 0 60px rgba(0, 0, 0, 0.6);
+    border-left: 1px solid rgba(255, 255, 255, 0.05);
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+  }
+}
+
+/* Tombol logout — pojok kanan atas, di atas feed video */
+.app-logout-btn {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 9;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: rgba(255, 255, 255, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, color 0.2s, transform 0.15s;
+}
+
+.app-logout-btn:hover {
+  background: rgba(255, 59, 92, 0.5);
+  color: #fff;
+}
+
+.app-logout-btn:active {
+  transform: scale(0.9);
+}
