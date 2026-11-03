@@ -1,10 +1,9 @@
 -- ============================================================
--- MIGRASI AWAL — Tabel posts dan profiles
+-- MIGRASI AWAL — Tabel posts, profiles, comments
 -- Salin & jalankan di Supabase Dashboard → SQL Editor
 -- ============================================================
 
 -- ── 1. Tabel profil pengguna ──────────────────────────────
--- Dibuat otomatis saat user sign up lewat trigger di bawah.
 create table if not exists public.profiles (
   id            uuid        primary key references auth.users(id) on delete cascade,
   username      text        unique not null,
@@ -15,15 +14,12 @@ create table if not exists public.profiles (
   updated_at    timestamptz not null default now()
 );
 
--- Row Level Security
 alter table public.profiles enable row level security;
 
--- Semua orang bisa baca profil (feed publik)
-create policy "Profil bisa dibaca siapa saja"
+create policy "profiles_select"
   on public.profiles for select using (true);
 
--- Hanya pemilik yang bisa update profil sendiri
-create policy "Hanya pemilik yang bisa update profil"
+create policy "profiles_update"
   on public.profiles for update using (auth.uid() = id);
 
 -- ── 2. Trigger — buat profil otomatis saat sign up ──────────
@@ -32,9 +28,7 @@ returns trigger language plpgsql security definer as $$
 declare
   email_name text;
 begin
-  -- Ambil bagian sebelum @ dari email
   email_name := split_part(new.email, '@', 1);
-  -- Buat username unik dengan menambah suffix angka jika perlu
   insert into public.profiles (id, username, display_name)
   values (
     new.id,
@@ -57,8 +51,8 @@ create table if not exists public.posts (
   id              uuid        primary key default gen_random_uuid(),
   user_id         uuid        not null references auth.users(id) on delete cascade,
   type            text        not null check (type in ('video', 'image')),
-  file_url        text        not null,          -- URL publik dari Supabase Storage
-  thumbnail_url   text,                          -- URL thumbnail (gambar kecil)
+  file_url        text        not null,
+  thumbnail_url   text,
   caption         text        not null default '',
   file_name       text        not null default '',
   file_size       bigint      not null default 0,
@@ -68,41 +62,28 @@ create table if not exists public.posts (
   updated_at      timestamptz not null default now()
 );
 
--- Index untuk urutan terbaru
 create index if not exists posts_created_at_idx on public.posts (created_at desc);
 create index if not exists posts_user_id_idx    on public.posts (user_id);
 
--- Row Level Security
 alter table public.posts enable row level security;
 
--- Semua orang (yang login) bisa baca semua postingan
-create policy "Postingan bisa dibaca siapa saja"
-  on public.posts for select using (auth.role() = 'authenticated');
+-- Semua user yang sudah login bisa baca semua postingan
+create policy "posts_select"
+  on public.posts for select using (auth.uid() is not null);
 
--- Hanya pemilik yang bisa insert postingan sendiri
-create policy "Hanya pemilik yang bisa insert postingan"
+-- Hanya pemilik yang bisa insert
+create policy "posts_insert"
   on public.posts for insert with check (auth.uid() = user_id);
 
--- Hanya pemilik yang bisa update postingan sendiri
-create policy "Hanya pemilik yang bisa update postingan"
+-- Hanya pemilik yang bisa update
+create policy "posts_update"
   on public.posts for update using (auth.uid() = user_id);
 
--- Hanya pemilik yang bisa hapus postingan sendiri
-create policy "Hanya pemilik yang bisa hapus postingan"
+-- Hanya pemilik yang bisa hapus
+create policy "posts_delete"
   on public.posts for delete using (auth.uid() = user_id);
 
--- ── 4. Storage bucket ─────────────────────────────────────
--- Buat bucket "vidora-posts" di: Storage → New Bucket
--- Name   : vidora-posts
--- Public : YES (centang "Public bucket")
---
--- Lalu tambahkan policy ini di Storage → Policies → vidora-posts:
---
--- INSERT: authenticated users only
--- SELECT: public (everyone)
--- DELETE: owner only (storage.foldername(name)[1] = auth.uid()::text)
-
--- ── 5. Tabel komentar ─────────────────────────────────────
+-- ── 4. Tabel komentar ─────────────────────────────────────
 create table if not exists public.comments (
   id         uuid        primary key default gen_random_uuid(),
   post_id    uuid        not null references public.posts(id) on delete cascade,
@@ -115,11 +96,11 @@ create index if not exists comments_post_id_idx on public.comments (post_id, cre
 
 alter table public.comments enable row level security;
 
-create policy "Komentar bisa dibaca siapa saja"
-  on public.comments for select using (auth.role() = 'authenticated');
+create policy "comments_select"
+  on public.comments for select using (auth.uid() is not null);
 
-create policy "User login bisa tambah komentar"
+create policy "comments_insert"
   on public.comments for insert with check (auth.uid() = user_id);
 
-create policy "Hanya pemilik yang bisa hapus komentar"
+create policy "comments_delete"
   on public.comments for delete using (auth.uid() = user_id);
