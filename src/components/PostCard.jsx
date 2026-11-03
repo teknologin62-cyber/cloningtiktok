@@ -1,9 +1,6 @@
 // ============================================================
-// POST CARD — Kartu untuk menampilkan postingan gambar ATAU video
-// dari pengguna lain di feed komunitas
-// ============================================================
-// Mirip VideoCard tapi juga menangani tipe 'image'.
-// Menerima objek post dari useFeed (bukan format mock videos.js).
+// POST CARD — Kartu postingan (video / gambar) dari komunitas
+// Likes, bookmarks, dan komentar disimpan ke Supabase.
 // ============================================================
 
 import { useState, useRef, useEffect, useCallback } from 'react';
@@ -13,9 +10,10 @@ import {
 } from './icons';
 import { formatCount } from '../data/videos';
 import CommentModal from './CommentModal';
+import { useInteractions } from '../hooks/useInteractions';
 import './PostCard.css';
 
-// Gradien fallback untuk kreator tanpa avatar
+// ── Gradien fallback avatar ──
 const AVATAR_GRADIENTS = [
   'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
   'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
@@ -24,33 +22,22 @@ const AVATAR_GRADIENTS = [
   'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)',
   'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',
 ];
-
 function avatarGradient(userId = '') {
   const code = userId.charCodeAt(userId.length - 1) || 0;
   return AVATAR_GRADIENTS[code % AVATAR_GRADIENTS.length];
 }
 
-// ── Komponen avatar kreator ──
 function CreatorAvatar({ creator, size = 44 }) {
   if (creator?.avatarUrl) {
     return (
-      <img
-        src={creator.avatarUrl}
-        alt={creator.displayName}
-        className="postcard-avatar-img"
-        style={{ width: size, height: size }}
-      />
+      <img src={creator.avatarUrl} alt={creator.displayName}
+        className="postcard-avatar-img" style={{ width: size, height: size }} />
     );
   }
   return (
-    <div
-      className="postcard-avatar-initials"
-      style={{
-        width: size, height: size,
-        background: avatarGradient(creator?.userId),
-      }}
-      aria-label={`Avatar ${creator?.displayName}`}
-    >
+    <div className="postcard-avatar-initials"
+      style={{ width: size, height: size, background: avatarGradient(creator?.userId) }}
+      aria-label={`Avatar ${creator?.displayName}`}>
       {(creator?.displayName?.[0] ?? '?').toUpperCase()}
     </div>
   );
@@ -58,27 +45,29 @@ function CreatorAvatar({ creator, size = 44 }) {
 
 // ── PostCard utama ──
 function PostCard({ post }) {
-  const [liked,        setLiked]        = useState(false);
-  const [bookmarked,   setBookmarked]   = useState(false);
+  // ── Interaksi tersimpan (Supabase) ──
+  const {
+    liked, bookmarked, likeCount,
+    comments, commentsLoading,
+    toggleLike, toggleBookmark,
+    fetchComments, addComment, deleteComment,
+  } = useInteractions(post.id);
+
   const [showComments, setShowComments] = useState(false);
 
-  // State untuk video
+  // ── State pemutar (video) ──
   const [isPaused,  setIsPaused]  = useState(true);
   const [isMuted,   setIsMuted]   = useState(true);
   const [isLoading, setIsLoading] = useState(post.type === 'video');
   const [hasError,  setHasError]  = useState(false);
 
-  // Toast
-  const [toast, setToast] = useState('');
-  const toastTimer = useRef(null);
+  // ── Toast ──
+  const [toast,    setToast]    = useState('');
+  const toastTimer              = useRef(null);
+  const videoRef                = useRef(null);
+  const cardRef                 = useRef(null);
 
-  const videoRef = useRef(null);
-  const cardRef  = useRef(null);
-
-  const likeCount     = liked      ? post.likesCount     + 1 : post.likesCount;
-  const bookmarkCount = bookmarked ? (post.bookmarksCount ?? 0) + 1 : (post.bookmarksCount ?? 0);
-
-  // ── Toast listener ──
+  // Toast listener (dari share)
   useEffect(() => {
     const handler = (e) => {
       setToast(e.detail.message);
@@ -89,38 +78,37 @@ function PostCard({ post }) {
     return () => { window.removeEventListener('vidora:toast', handler); clearTimeout(toastTimer.current); };
   }, []);
 
-  // ── Autoplay video via IntersectionObserver ──
+  // Autoplay video
   useEffect(() => {
     if (post.type !== 'video') return;
     const videoEl = videoRef.current;
     const card    = cardRef.current;
     if (!videoEl || !card) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            videoEl.play().then(() => setIsPaused(false)).catch(() => setIsPaused(true));
-          } else {
-            videoEl.pause();
-            videoEl.currentTime = 0;
-            setIsPaused(true);
-            setShowComments(false);
-          }
-        });
-      },
-      { threshold: 0.6 }
-    );
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          videoEl.play().then(() => setIsPaused(false)).catch(() => setIsPaused(true));
+        } else {
+          videoEl.pause(); videoEl.currentTime = 0;
+          setIsPaused(true); setShowComments(false);
+        }
+      });
+    }, { threshold: 0.6 });
     observer.observe(card);
     return () => observer.disconnect();
   }, [post.type, post.id]);
 
-  // Sync muted
   useEffect(() => {
     if (videoRef.current) videoRef.current.muted = isMuted;
   }, [isMuted]);
 
-  // ── Ketuk untuk play/pause ──
+  // Buka komentar → fetch dari Supabase
+  const handleOpenComments = useCallback((e) => {
+    e.stopPropagation();
+    fetchComments();
+    setShowComments(true);
+  }, [fetchComments]);
+
   const handleTap = useCallback(() => {
     if (post.type !== 'video') return;
     const el = videoRef.current;
@@ -129,13 +117,11 @@ function PostCard({ post }) {
     else           { el.pause(); setIsPaused(true); }
   }, [post.type, hasError, showComments]);
 
-  // ── Share ──
   const handleShare = useCallback(async (e) => {
     e.stopPropagation();
     const url   = post.fileUrl;
     const title = `${post.creator?.displayName}: ${post.caption}`;
     const shareData = { title: 'Vidora — ' + title, text: title, url };
-
     if (navigator.share && navigator.canShare?.(shareData)) {
       try { await navigator.share(shareData); } catch (err) { if (err.name !== 'AbortError') console.warn(err); }
       return;
@@ -143,12 +129,10 @@ function PostCard({ post }) {
     try {
       await navigator.clipboard.writeText(url);
       window.dispatchEvent(new CustomEvent('vidora:toast', { detail: { message: 'Tautan disalin!' } }));
-    } catch {
-      window.alert(`Salin tautan:\n${url}`);
-    }
+    } catch { window.alert(`Salin tautan:\n${url}`); }
   }, [post]);
 
-  // ── Format waktu relatif ──
+  // Waktu relatif
   const relativeTime = (() => {
     const diff  = Date.now() - new Date(post.createdAt).getTime();
     const mins  = Math.floor(diff / 60000);
@@ -161,19 +145,9 @@ function PostCard({ post }) {
     return new Date(post.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
   })();
 
-  // Adaptasi format agar CommentModal bisa menerimanya
-  const videoCompat = {
-    id:       post.id,
-    caption:  post.caption,
-    creator:  {
-      username:    post.creator?.username,
-      displayName: post.creator?.displayName,
-      avatarGradient: avatarGradient(post.creator?.userId),
-      verified: false,
-    },
-    stats:    { comments: post.commentsCount ?? 0 },
-    comments: [],  // TODO: fetch dari tabel comments
-  };
+  // Jumlah komentar: pakai panjang array komentar yang sudah di-fetch,
+  // atau fallback ke angka dari feed
+  const commentCount = showComments ? comments.length : (post.commentsCount ?? 0);
 
   return (
     <article
@@ -184,7 +158,6 @@ function PostCard({ post }) {
       {/* ── MEDIA ── */}
       {post.type === 'video' ? (
         <>
-          {/* Latar fallback */}
           <div className="postcard-bg" style={{ background: 'linear-gradient(160deg, #1a1a2e 0%, #16213e 100%)' }} />
           <video
             ref={videoRef}
@@ -198,34 +171,23 @@ function PostCard({ post }) {
             onError={() => { setIsLoading(false); setHasError(true); }}
           />
           {isLoading && !hasError && (
-            <div className="postcard-loading" aria-label="Memuat...">
-              <div className="spinner" />
-            </div>
+            <div className="postcard-loading" aria-label="Memuat..."><div className="spinner" /></div>
           )}
           {hasError && (
-            <div className="postcard-error">
-              <span>⚠️</span>
-              <p>Video tidak dapat dimuat</p>
-            </div>
+            <div className="postcard-error"><span>⚠️</span><p>Video tidak dapat dimuat</p></div>
           )}
           {isPaused && !isLoading && !hasError && (
-            <div className="postcard-play-indicator" aria-hidden="true">
-              <PlayIcon size={64} />
-            </div>
+            <div className="postcard-play-indicator" aria-hidden="true"><PlayIcon size={64} /></div>
           )}
-          {/* Tombol suara */}
           {!hasError && (
-            <button
-              className="postcard-mute-btn"
+            <button className="postcard-mute-btn"
               onClick={(e) => { e.stopPropagation(); setIsMuted((m) => !m); }}
-              aria-label={isMuted ? 'Aktifkan suara' : 'Matikan suara'}
-            >
+              aria-label={isMuted ? 'Aktifkan suara' : 'Matikan suara'}>
               {isMuted ? <VolumeOffIcon size={20} /> : <VolumeOnIcon size={20} />}
             </button>
           )}
         </>
       ) : (
-        /* ── GAMBAR ── */
         <div className="postcard-image-wrap">
           <img
             src={post.fileUrl}
@@ -233,16 +195,14 @@ function PostCard({ post }) {
             className="postcard-image"
             loading="lazy"
             onError={(e) => {
-              // Fallback ke thumbnail jika URL asli gagal
-              if (post.thumbnailUrl && e.target.src !== post.thumbnailUrl) {
+              if (post.thumbnailUrl && e.target.src !== post.thumbnailUrl)
                 e.target.src = post.thumbnailUrl;
-              }
             }}
           />
         </div>
       )}
 
-      {/* ── Gradien gelap bawah ── */}
+      {/* ── Overlay ── */}
       <div className="postcard-overlay" />
 
       {/* ── Info kreator ── */}
@@ -256,16 +216,14 @@ function PostCard({ post }) {
       </div>
 
       {/* ── Caption ── */}
-      {post.caption && (
-        <p className="postcard-caption">{post.caption}</p>
-      )}
+      {post.caption && <p className="postcard-caption">{post.caption}</p>}
 
       {/* ── Interaction bar ── */}
       <div className="postcard-interactions">
-        {/* Suka */}
+        {/* Suka — tersimpan ke Supabase */}
         <button
           className={`postcard-btn ${liked ? 'liked' : ''}`}
-          onClick={(e) => { e.stopPropagation(); setLiked((l) => !l); }}
+          onClick={(e) => { e.stopPropagation(); toggleLike(); }}
           aria-label={liked ? 'Batalkan suka' : 'Suka'}
           aria-pressed={liked}
         >
@@ -273,33 +231,28 @@ function PostCard({ post }) {
           <span>{formatCount(likeCount)}</span>
         </button>
 
-        {/* Komentar */}
+        {/* Komentar — fetch dari Supabase */}
         <button
           className="postcard-btn"
-          onClick={(e) => { e.stopPropagation(); setShowComments(true); }}
+          onClick={handleOpenComments}
           aria-label="Komentar"
         >
           <CommentIcon size={30} />
-          <span>{formatCount(post.commentsCount ?? 0)}</span>
+          <span>{formatCount(commentCount)}</span>
         </button>
 
-        {/* Bookmark */}
+        {/* Bookmark — tersimpan ke Supabase */}
         <button
           className={`postcard-btn ${bookmarked ? 'bookmarked' : ''}`}
-          onClick={(e) => { e.stopPropagation(); setBookmarked((b) => !b); }}
+          onClick={(e) => { e.stopPropagation(); toggleBookmark(); }}
           aria-label={bookmarked ? 'Batalkan simpan' : 'Simpan'}
           aria-pressed={bookmarked}
         >
           <BookmarkIcon filled={bookmarked} size={30} />
-          <span>{formatCount(bookmarkCount)}</span>
         </button>
 
         {/* Bagikan */}
-        <button
-          className="postcard-btn"
-          onClick={handleShare}
-          aria-label="Bagikan"
-        >
+        <button className="postcard-btn" onClick={handleShare} aria-label="Bagikan">
           <ShareIcon size={30} />
         </button>
       </div>
@@ -308,13 +261,15 @@ function PostCard({ post }) {
       <CommentModal
         isOpen={showComments}
         onClose={() => setShowComments(false)}
-        video={videoCompat}
+        comments={comments}
+        loading={commentsLoading}
+        onAddComment={addComment}
+        onDeleteComment={deleteComment}
+        post={post}
       />
 
       {/* ── Toast ── */}
-      {toast && (
-        <div className="toast" role="status" aria-live="polite">{toast}</div>
-      )}
+      {toast && <div className="toast" role="status" aria-live="polite">{toast}</div>}
     </article>
   );
 }
