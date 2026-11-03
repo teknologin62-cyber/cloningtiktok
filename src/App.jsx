@@ -4,10 +4,10 @@
 // Alur tampilan:
 //   loading = true  → layar loading (cek sesi awal)
 //   user = null     → AuthPage (Login / Register)
-//   user = ada      → Feed Video + tombol Logout di pojok atas
+//   user = ada      → Feed Video + BottomNav + ProfilePage
 //
-// checkConnection() dipanggil sekali di awal untuk log Console.
-// useAuth() mengelola semua state dan logika autentikasi.
+// usePosts dikelola di sini agar UploadModal (via BottomNav)
+// dan ProfilePage berbagi sumber data yang sama.
 // ============================================================
 
 import { useEffect, useState } from 'react'
@@ -16,13 +16,15 @@ import BottomNav from './components/BottomNav'
 import AuthPage from './pages/AuthPage'
 import ProfilePage from './pages/ProfilePage'
 import { useAuth } from './hooks/useAuth'
+import { usePosts } from './hooks/usePosts'
 import { checkConnection } from './lib/supabaseClient'
 import './App.css'
-// AuthPage.css dimuat via AuthPage.jsx — loading screen pakai class dari sana
 import './pages/AuthPage.css'
 
 function App() {
   const { user, loading, signUp, signIn, signOut } = useAuth()
+  const { posts, addPost, removePost, updatePostCaption } = usePosts()
+
   // Tab aktif dikelola di App agar ProfilePage bisa di-render/sembunyi
   const [activeTab, setActiveTab] = useState('home')
 
@@ -31,7 +33,7 @@ function App() {
     checkConnection()
   }, [])
 
-  // ── Layar loading awal: cegah "kedipan" halaman login ──
+  // ── Layar loading awal ──
   if (loading) {
     return (
       <div className="auth-loading-screen">
@@ -41,15 +43,15 @@ function App() {
     )
   }
 
-  // ── Belum login: tampilkan halaman auth ──
+  // ── Belum login ──
   if (!user) {
     return <AuthPage onSignUp={signUp} onSignIn={signIn} />
   }
 
-  // ── Sudah login: tampilkan feed + navigasi ──
+  // ── Sudah login ──
   return (
     <div className="app">
-      {/* Feed video — sembunyikan saat di tab profil agar state video terjaga */}
+      {/* Feed video — disembunyikan (bukan dihapus) saat di tab profil */}
       <div
         className="app-feed-layer"
         style={{ display: activeTab === 'profile' ? 'none' : 'block' }}
@@ -61,12 +63,22 @@ function App() {
       {/* Halaman profil */}
       {activeTab === 'profile' && (
         <div className="app-profile-layer">
-          <ProfilePage user={user} onSignOut={signOut} />
+          <ProfilePage
+            user={user}
+            posts={posts}
+            onSignOut={signOut}
+            onRemovePost={removePost}
+            onUpdateCaption={updatePostCaption}
+          />
         </div>
       )}
 
-      {/* Navigasi bawah — kirim activeTab & setter ke BottomNav */}
-      <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
+      {/* Navigasi bawah */}
+      <BottomNav
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        onPost={addPost}
+      />
     </div>
   )
 }

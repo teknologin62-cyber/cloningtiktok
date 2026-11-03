@@ -1,82 +1,97 @@
 // ============================================================
-// UPLOAD MODAL - Modal untuk posting video baru
+// UPLOAD MODAL — Posting video atau gambar baru
 // ============================================================
 // Muncul saat pengguna menekan tombol + di bottom nav.
-// Mendukung pemilihan file video, thumbnail otomatis, judul,
-// dan deskripsi sebelum dikirim.
+// Mendukung: video (MP4, MOV, AVI) dan gambar (JPG, PNG, GIF, WebP).
+// Setelah post berhasil, memanggil onPost(file, caption) agar
+// App.jsx bisa menyimpan ke usePosts hook.
 // ============================================================
 
 import { useState, useRef, useCallback } from 'react';
 import { CloseIcon, PlusIcon } from './icons';
 import './UploadModal.css';
 
-function UploadModal({ onClose }) {
-  const [videoFile, setVideoFile] = useState(null);
-  const [videoPreview, setVideoPreview] = useState(null);
-  const [caption, setCaption] = useState('');
-  const [isDragging, setIsDragging] = useState(false);
+// Tipe file yang diterima
+const ACCEPT = 'video/*,image/*';
+
+function UploadModal({ onClose, onPost }) {
+  const [file, setFile]               = useState(null);
+  const [preview, setPreview]         = useState(null); // object URL
+  const [fileType, setFileType]       = useState(null); // 'video' | 'image'
+  const [caption, setCaption]         = useState('');
+  const [isDragging, setIsDragging]   = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [uploadDone, setUploadDone] = useState(false);
+  const [uploadDone, setUploadDone]   = useState(false);
+  const [error, setError]             = useState(null);
 
   const fileInputRef = useRef(null);
 
-  // ── Proses file yang dipilih ──
-  const handleFile = useCallback((file) => {
-    if (!file) return;
-    if (!file.type.startsWith('video/')) {
-      alert('Hanya file video yang didukung.');
-      return;
-    }
-    if (file.size > 200 * 1024 * 1024) {
-      alert('Ukuran file maksimal 200 MB.');
-      return;
-    }
-    setVideoFile(file);
-    setVideoPreview(URL.createObjectURL(file));
-  }, []);
+  // ── Validasi & proses file yang dipilih ──
+  const handleFile = useCallback((raw) => {
+    if (!raw) return;
+    setError(null);
 
-  // ── Input file biasa ──
-  const handleFileInput = (e) => {
-    handleFile(e.target.files[0]);
-  };
+    const isVideo = raw.type.startsWith('video/');
+    const isImage = raw.type.startsWith('image/');
+
+    if (!isVideo && !isImage) {
+      setError('Hanya file video atau gambar yang didukung.');
+      return;
+    }
+    if (isVideo && raw.size > 200 * 1024 * 1024) {
+      setError('Ukuran video maksimal 200 MB.');
+      return;
+    }
+    if (isImage && raw.size > 20 * 1024 * 1024) {
+      setError('Ukuran gambar maksimal 20 MB.');
+      return;
+    }
+
+    // Revoke URL lama sebelum buat yang baru
+    if (preview) URL.revokeObjectURL(preview);
+
+    setFile(raw);
+    setPreview(URL.createObjectURL(raw));
+    setFileType(isVideo ? 'video' : 'image');
+  }, [preview]);
+
+  const handleFileInput = (e) => handleFile(e.target.files?.[0]);
 
   // ── Drag & Drop ──
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = () => setIsDragging(false);
-
-  const handleDrop = (e) => {
+  const handleDragOver  = (e) => { e.preventDefault(); setIsDragging(true); };
+  const handleDragLeave = ()  => setIsDragging(false);
+  const handleDrop      = (e) => {
     e.preventDefault();
     setIsDragging(false);
-    handleFile(e.dataTransfer.files[0]);
+    handleFile(e.dataTransfer.files?.[0]);
   };
 
-  // ── Hapus video yang dipilih ──
-  const handleRemoveVideo = () => {
-    setVideoFile(null);
-    if (videoPreview) URL.revokeObjectURL(videoPreview);
-    setVideoPreview(null);
+  // ── Hapus file yang dipilih ──
+  const handleRemove = () => {
+    if (preview) URL.revokeObjectURL(preview);
+    setFile(null);
+    setPreview(null);
+    setFileType(null);
+    setError(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   // ── Submit / Post ──
   const handlePost = async () => {
-    if (!videoFile) return;
+    if (!file || isUploading) return;
+    setError(null);
     setIsUploading(true);
 
-    // Simulasi upload (ganti dengan logika Supabase Storage di sini)
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-
-    setIsUploading(false);
-    setUploadDone(true);
-
-    // Tutup modal setelah 1.5 detik
-    setTimeout(() => {
-      onClose();
-    }, 1500);
+    try {
+      // Panggil callback — App.jsx akan simpan ke usePosts
+      await onPost?.(file, caption);
+      setUploadDone(true);
+      // Tutup modal setelah animasi sukses
+      setTimeout(() => onClose(), 1400);
+    } catch (err) {
+      setError('Gagal menyimpan postingan. Coba lagi.');
+      setIsUploading(false);
+    }
   };
 
   // ── Tutup modal saat klik backdrop ──
@@ -84,18 +99,24 @@ function UploadModal({ onClose }) {
     if (e.target === e.currentTarget && !isUploading) onClose();
   };
 
+  // ── Label tipe file ──
+  const typeLabel = fileType === 'image' ? 'Gambar' : fileType === 'video' ? 'Video' : '';
+
   return (
     <div
       className="upload-modal-backdrop"
       onClick={handleBackdropClick}
       role="dialog"
       aria-modal="true"
-      aria-label="Upload video baru"
+      aria-label="Posting konten baru"
     >
       <div className="upload-modal">
-        {/* Header */}
+
+        {/* ── Header ── */}
         <div className="upload-modal-header">
-          <h2 className="upload-modal-title">Posting Video</h2>
+          <h2 className="upload-modal-title">
+            {typeLabel ? `Posting ${typeLabel}` : 'Posting Konten'}
+          </h2>
           <button
             className="upload-modal-close"
             onClick={onClose}
@@ -106,10 +127,11 @@ function UploadModal({ onClose }) {
           </button>
         </div>
 
-        {/* Konten */}
+        {/* ── Body ── */}
         <div className="upload-modal-body">
-          {/* Area pilih video */}
-          {!videoFile ? (
+
+          {/* Area pilih file */}
+          {!file ? (
             <div
               className={`upload-dropzone ${isDragging ? 'dragging' : ''}`}
               onDragOver={handleDragOver}
@@ -119,18 +141,22 @@ function UploadModal({ onClose }) {
               role="button"
               tabIndex={0}
               onKeyDown={(e) => e.key === 'Enter' && fileInputRef.current?.click()}
-              aria-label="Klik atau seret video ke sini"
+              aria-label="Klik atau seret file ke sini"
             >
               <div className="upload-dropzone-icon">
                 <PlusIcon size={32} />
               </div>
-              <p className="upload-dropzone-text">Ketuk untuk pilih video</p>
-              <p className="upload-dropzone-hint">atau seret & lepas file di sini</p>
-              <p className="upload-dropzone-limit">MP4, MOV, AVI · Maks. 200 MB</p>
+              <p className="upload-dropzone-text">Ketuk untuk pilih file</p>
+              <p className="upload-dropzone-hint">atau seret & lepas di sini</p>
+              <p className="upload-dropzone-limit">
+                Video: MP4, MOV, AVI · Maks. 200 MB
+                <br />
+                Gambar: JPG, PNG, GIF, WebP · Maks. 20 MB
+              </p>
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="video/*"
+                accept={ACCEPT}
                 onChange={handleFileInput}
                 className="upload-file-input"
                 aria-hidden="true"
@@ -138,24 +164,51 @@ function UploadModal({ onClose }) {
             </div>
           ) : (
             <div className="upload-preview-wrap">
-              {/* Preview video */}
-              <video
-                className="upload-preview-video"
-                src={videoPreview}
-                controls
-                playsInline
-                aria-label="Preview video yang dipilih"
-              />
+              {/* Preview konten */}
+              {fileType === 'video' ? (
+                <video
+                  className="upload-preview-media"
+                  src={preview}
+                  controls
+                  playsInline
+                  aria-label="Preview video"
+                />
+              ) : (
+                <img
+                  className="upload-preview-media upload-preview-image"
+                  src={preview}
+                  alt="Preview gambar"
+                />
+              )}
+
+              {/* Badge tipe */}
+              <span className="upload-preview-type-badge">
+                {typeLabel}
+              </span>
+
+              {/* Tombol hapus */}
               <button
                 className="upload-preview-remove"
-                onClick={handleRemoveVideo}
-                aria-label="Hapus video"
+                onClick={handleRemove}
+                aria-label="Hapus file"
                 disabled={isUploading}
               >
                 <CloseIcon size={16} />
               </button>
-              <p className="upload-preview-filename">{videoFile.name}</p>
+
+              {/* Nama file */}
+              <p className="upload-preview-filename">
+                {file.name}
+                <span className="upload-preview-filesize">
+                  {' '}· {(file.size / 1024 / 1024).toFixed(1)} MB
+                </span>
+              </p>
             </div>
+          )}
+
+          {/* Pesan error */}
+          {error && (
+            <p className="upload-error" role="alert">{error}</p>
           )}
 
           {/* Caption */}
@@ -168,32 +221,33 @@ function UploadModal({ onClose }) {
               maxLength={300}
               rows={3}
               disabled={isUploading}
-              aria-label="Caption video"
+              aria-label="Caption postingan"
             />
             <span className="upload-caption-count">{caption.length}/300</span>
           </div>
         </div>
 
-        {/* Footer / Tombol Post */}
+        {/* ── Footer ── */}
         <div className="upload-modal-footer">
           {uploadDone ? (
             <div className="upload-success" aria-live="polite">
-              ✓ Video berhasil diposting!
+              ✓ Postingan berhasil disimpan!
             </div>
           ) : (
             <button
-              className={`upload-post-btn ${!videoFile || isUploading ? 'disabled' : ''}`}
+              className={`upload-post-btn ${!file || isUploading ? 'disabled' : ''}`}
               onClick={handlePost}
-              disabled={!videoFile || isUploading}
-              aria-disabled={!videoFile || isUploading}
+              disabled={!file || isUploading}
+              aria-disabled={!file || isUploading}
             >
-              {isUploading ? (
-                <span className="upload-spinner" aria-label="Sedang mengupload..." />
-              ) : null}
-              {isUploading ? 'Mengupload...' : 'Posting Sekarang'}
+              {isUploading && (
+                <span className="upload-spinner" aria-label="Menyimpan..." />
+              )}
+              {isUploading ? 'Menyimpan...' : 'Posting Sekarang'}
             </button>
           )}
         </div>
+
       </div>
     </div>
   );

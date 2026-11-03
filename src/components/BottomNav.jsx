@@ -11,13 +11,16 @@ import { HomeIcon, CompassIcon, PlusIcon, ChatIcon, UserIcon } from './icons';
 import UploadModal from './UploadModal';
 import './BottomNav.css';
 
-// activeTab & onTabChange dikelola oleh App.jsx
-// sehingga komponen lain (misal ProfilePage) bisa tahu tab mana yang aktif
-function BottomNav({ activeTab = 'home', onTabChange }) {
+function BottomNav({ activeTab = 'home', onTabChange, onPost }) {
   // Kontrol visibilitas modal upload — lokal cukup di sini
   const [showUpload, setShowUpload] = useState(false);
 
   const goTo = (tab) => onTabChange?.(tab);
+
+  // Dipanggil oleh UploadModal saat user klik "Posting Sekarang"
+  const handlePost = async (file, caption) => {
+    await onPost?.(file, caption);
+  };
 
   return (
     <>
@@ -79,7 +82,10 @@ function BottomNav({ activeTab = 'home', onTabChange }) {
 
       {/* Modal Upload — render di luar nav agar z-index benar */}
       {showUpload && (
-        <UploadModal onClose={() => setShowUpload(false)} />
+        <UploadModal
+          onClose={() => setShowUpload(false)}
+          onPost={handlePost}
+        />
       )}
     </>
   );
