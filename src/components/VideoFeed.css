@@ -16,3 +16,105 @@
 .video-feed::-webkit-scrollbar {
   display: none;                  /* Chrome/Safari */
 }
+
+/* ── State helper ── */
+.feed--centered {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+
+/* Spinner awal */
+.feed-spinner-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  color: var(--text-muted);
+}
+
+.feed-spinner-text {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* Empty state */
+.feed-empty {
+  text-align: center;
+  padding: 32px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.feed-empty-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.feed-empty-hint {
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.feed-empty-hint strong { color: var(--accent-primary); }
+
+/* Error state */
+.feed-error {
+  text-align: center;
+  padding: 32px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+}
+
+.feed-error-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.feed-error-detail {
+  font-size: 12px;
+  color: rgba(255, 200, 100, 0.85);
+  font-family: monospace;
+  background: rgba(0,0,0,0.3);
+  padding: 6px 12px;
+  border-radius: 6px;
+  max-width: 280px;
+}
+
+.feed-error-retry {
+  margin-top: 6px;
+  padding: 10px 24px;
+  border-radius: 12px;
+  background: var(--accent-primary);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  transition: opacity 0.2s;
+}
+
+.feed-error-retry:hover { opacity: 0.85; }
+
+/* Load more spinner */
+.feed-load-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  scroll-snap-align: none;
+}
+
+/* Pesan akhir feed */
+.feed-end {
+  text-align: center;
+  padding: 28px 24px calc(var(--nav-height) + 28px);
+  font-size: 13px;
+  color: var(--text-muted);
+  scroll-snap-align: none;
+}
